@@ -90,7 +90,7 @@ function buildBouyDataFromResponse(data){
         fortyFiveDayData.push(bouyData);
     }
 
-    console.log("logging array " + JSON.stringify(fortyFiveDayData));
+    //console.log("logging array " + JSON.stringify(fortyFiveDayData));
     status = new DataStatus('true'); 
 }
 

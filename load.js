@@ -41,6 +41,11 @@ function BouyData(YY,MM,DD,hh,mm,WVHT,SwH,SwP,WWH,WWP,SwD,WWD,STEEPNESS,APD,MWD)
 }
 
 
+function clearBouyData()
+{
+    fortyFiveDayData = [];
+}
+
 function buildBouyDataFromResponse(data){
 
     var responseData = data.join('');
@@ -76,24 +81,40 @@ function buildBouyDataFromResponse(data){
         fortyFiveDayData.push(bouyData);
     }
 
+    status = 'true';
 }
 
 //var host='www.ndbc.noaa.gov';
 var host='http://www.ndbc.noaa.gov';
 var bouyNumber = '46229';
 var fortyFiveDayData = [];
+var status = 'false';
 
-var iterator = 0;
-//http.get({host: host, path:'/data/realtime2/'+bouyNumber+'.spec'}, function(res){
-http.get(host+ '/data/realtime2/'+bouyNumber+'.spec', function(res){
+module.exports = {
+     initializeBouyData: function()
+                         {
+         var iterator = 0;
+         //http.get({host: host, path:'/data/realtime2/'+bouyNumber+'.spec'}, function(res){
+         http.get(host+ '/data/realtime2/'+bouyNumber+'.spec', function(res){
 
-    var responseParts = [];
-    res.setEncoding('utf8');
+             var responseParts = [];
+             res.setEncoding('utf8');
 
-    res.on("data", function(chunk){
-        responseParts.push(chunk.trim());
-    });
-    res.on("end", function(){
-        buildBouyDataFromResponse(responseParts);
-    });
-});
+             res.on("data", function(chunk){
+                 responseParts.push(chunk.trim());
+             });
+             res.on("end", function(){
+                 clearBouyData();
+                 buildBouyDataFromResponse(responseParts);
+             });
+         });
+     },
+     getBouyData: function()
+     {
+     },
+     getBouyDataStatus: function()
+     {
+         return '{ status: '+ status + ' }';
+     }
+};
+
