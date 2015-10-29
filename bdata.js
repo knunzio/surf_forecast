@@ -1,39 +1,48 @@
 var http = require('http');
 
+var host='http://www.ndbc.noaa.gov';
+var bouyNumber = '46229';
+var fortyFiveDayData = [];
+var status = new DataStatus('false');
+
 //#YY  MM DD hh mm WVHT  SwH  SwP  WWH  WWP SwD WWD  STEEPNESS  APD MWD
 //#yr  mo dy hr mn    m    m  sec    m  sec  -  degT     -      sec degT
-function BouyData(YY,MM,DD,hh,mm,WVHT,SwH,SwP,WWH,WWP,SwD,WWD,STEEPNESS,APD,MWD)
+function BouyData(SID,YY,MM,DD,hh,mm,WVHT,SwH,SwP,WWH,WWP,SwD,WWD,STEEPNESS,APD,MWD)
 {
+    //Station or Buoy Identifier
+    this.stationid = SID;
+    //Timestamp of data collection
+    this.timeStamp = new Date(YY,MM,DD,hh,mm).getTime()
     //year
-    this.YY=YY;
+    this.year=YY;
     //month
-    this.MM=MM;
+    this.month=MM;
     //day
-    this.DD=DD;
+    this.day=DD;
     //hour
-    this.hh=hh;
+    this.hour=hh;
     //minute
-    this.mm=mm;
+    this.minute=mm;
     //WaveHeight (meters)
-    this.WVHT=WVHT;
+    this.WaveHeightMeters=WVHT;
     //Swell Height (meters)
-    this.SwH=SwH;
+    this.SwellHeightMeters=SwH;
     //Swell Period(sec)
-    this.SwP=SwP;
+    this.SwellPeriodSeconds=SwP;
     //Wind Wave Height(meters)
-    this.WWH=WWH;
+    this.WindWaveHeightMeters=WWH;
     //Wind Wave Period(sec)
-    this.WWP=WWP;
+    this.WindWavePeriodMeters=WWP;
     //Swell Direction
-    this.SwD=SwD;
+    this.SwellDirection=SwD;
     //Wind Wave Direction
-    this.WWD=WWD;
+    this.WindWaveDirection=WWD;
     //Steepness
-    this.STEEPNESS=STEEPNESS;
+    this.WaveSteepness=STEEPNESS;
     //Average Period
-    this.APD=APD;
+    this.AveragePeriodSeconds=APD;
     //Mean Wave Direction
-    this.MWD=MWD;
+    this.MeanWaveDirection=MWD;
 
     BouyData.prototype.getInfo = function () {
         return JSON.stringify(this);
@@ -55,7 +64,7 @@ function clearBouyData()
     fortyFiveDayData = [];
 }
 
-function buildBouyDataFromResponse(data){
+function buildBouyDataFromResponse(stationId, data ){
 
     var responseData = data.join('');
     var lines = responseData.split("\n");
@@ -65,13 +74,13 @@ function buildBouyDataFromResponse(data){
         if(typeof lines[ii] === 'undefined')
            continue;
 
-        //console.log('Line: ' + lines[ii]);
         if(lines[ii].match(/^#/g))
             continue;
 
         var splitLine = lines[ii].split(/\s+/);
 
-        var bouyData = new BouyData(splitLine[0],
+        var bouyData = new BouyData(stationId,
+            splitLine[0],
             splitLine[1],
             splitLine[2],
             splitLine[3],
@@ -86,49 +95,45 @@ function buildBouyDataFromResponse(data){
             splitLine[12],
             splitLine[13],
             splitLine[14]);
-        //console.log('BouyData: ' + bouyData.getInfo());
         fortyFiveDayData.push(bouyData);
     }
 
-    //console.log("logging array " + JSON.stringify(fortyFiveDayData));
     status = new DataStatus('true'); 
 }
 
-function getDataForStation()
+function getDataForStation(stationId)
 {
-         var iterator = 0;
-         //http.get({host: host, path:'/data/realtime2/'+bouyNumber+'.spec'}, function(res){
-         http.get(host+ '/data/realtime2/'+bouyNumber+'.spec', function(res){
+   console.log("stationid: " + stationId);
+   http.get(host+ '/data/realtime2/'+stationId+'.spec', function(res){
 
-             var responseParts = [];
-             res.setEncoding('utf8');
+       var responseParts = [];
+       res.setEncoding('utf8');
 
-             res.on("data", function(chunk){
-                 responseParts.push(chunk.trim());
-             });
-             res.on("end", function(){
-                 clearBouyData();
-                 buildBouyDataFromResponse(responseParts);
-             });
-         });
+       res.on("data", function(chunk){
+           responseParts.push(chunk.trim());
+       });
+       res.on("end", function(){
+           clearBouyData();
+           buildBouyDataFromResponse(stationId, responseParts);
+       });
+   });
 }
 
 function getBouyDataArray()
 {
-    //return JSON.stringify(fortyFiveDayData);
     return fortyFiveDayData;
 }
 
-//var host='www.ndbc.noaa.gov';
-var host='http://www.ndbc.noaa.gov';
-var bouyNumber = '46229';
-var fortyFiveDayData = [];
-var status = new DataStatus('false');
+function getStationDataForTimeInterval(stationid, timeInterval)
+{
+
+}
+
 
 module.exports = {
-     initBouyData: function()
+     initBouyData: function(stationid)
      {
-         getDataForStation();
+         getDataForStation(stationid);
      },
      getBouyData: function()
      {
@@ -137,6 +142,10 @@ module.exports = {
      getBouyDataStatus: function()
      {
          return status;
+     },
+     getStationData: function(stationId, timeInterval)
+     {
+         return getStationDataForTimeInterval(stationId, timeInterval)
      }
 };
 

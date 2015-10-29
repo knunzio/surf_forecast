@@ -18,7 +18,8 @@ app.get('/bouyDataStatus', function (req, res) {
 });
 
 var server = app.listen(3000, function () {
-  bouyData.initBouyData();
+
+  bouyData.initBouyData('46229');
   
   var host = server.address().address;
   var port = server.address().port;
