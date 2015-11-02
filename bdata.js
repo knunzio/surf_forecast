@@ -1,13 +1,156 @@
 var http = require('http');
 
 var host='http://www.ndbc.noaa.gov';
-var bouyNumber = '46229';
+var buoyNumber = '46229';
 var fortyFiveDayData = [];
-var status = new DataStatus('false');
+var status = new BuoyDataStatus('false');
+
+var compassPoints [
+        {'N':'0'},
+        {'NNE':'23'},
+        {'NE':'45'},
+        {'ENE':'68'},
+        {'E':'90'},
+        {'ESE':'113'},
+        {'SE':'135'},
+        {'SSE':'158'},
+        {'S':'180'},
+        {'SSW':'203'},
+        {'SW':'225'},
+        {'WSW':'248'},
+        {'W':'270'},
+        {'WNW':'292'},
+        {'NW':'315'},
+        {'NNW':'326'}
+    ];
+
+var  surfBreaks [
+        {
+            name            : 'SeaSide, OR',
+            description     : 'The Coave.',
+            workingTideLevel: '',
+            facingDirection : 'WNW',
+            latitude        : { 
+                                  loc:'N', 
+                                  deg: '45.99'
+                              },
+            longitude       : {
+                                  loc: 'W',
+                                  deg: '123.92'
+                              }
+        }
+    ];
+
+var oregonStations = [
+        {
+            stationNumber : '46211',
+            stationName   : 'Grays Harbor'
+        },
+        {
+            stationNumber : '46029',
+            stationName   : 'Columbia River Bar'
+        },
+        {
+            stationNumber : '46248',
+            stationName   : 'Astoria Canyon'
+        },
+        {
+            stationNumber : '46050',
+            stationName   : 'Stonewall Bank'
+        },
+        {
+            stationNumber : '46229',
+            stationName   : 'Umpqua Offshore'
+        },
+        {
+            stationNumber : '46015',
+            stationName   : 'Stonewall Bank'
+        },
+        {
+            stationNumber : '46027',
+            stationName   : 'St Georges'
+        }
+    ];
+
+
+var longTermBuoys = [
+        {
+            stationNumber : '46036',
+            stationName   : 'South Nomad',
+            latitude     : { 
+                               loc:'N', 
+                               deg: '48.355'
+                           },
+            longitude    : {
+                               loc: 'W',
+                               deg: '133.938'
+                           }
+        },
+        {
+            stationNumber : '46005',
+            stationName   : 'West Washington',
+            latitude     : { 
+                               loc:'N', 
+                               deg: '45.958'
+                           },
+            longitude    : {
+                               loc: 'W',
+                               deg: '131'
+                           }
+        },
+        {
+            stationNumber : '46002',
+            stationName   : 'West Oregon',
+            latitude     : { 
+                               loc:'N', 
+                               deg: '42.614'
+                           },
+            longitude    : {
+                               loc: 'W',
+                               deg: '130.49'
+                           }
+        },
+        {
+            stationNumber : '46059',
+            stationName   : 'West California',
+            latitude     : { 
+                               loc:'N', 
+                               deg: '38.050'
+                           },
+            longitude    : {
+                               loc: 'W',
+                               deg: '129.898'
+                           }
+        }
+
+    ];
+
+//Ignore N vs S lat and E vs W long
+function haversin = function(lat1,lon1, lat2, lon2){
+    var radiusEarth = 6371000; // metres
+    var latitudeRadians1 = lat1.toRadians();
+    var latitudeRadians2 = lat2.toRadians();
+    var latitudeDelta = (lat2-lat1).toRadians();
+    var longitudeDelta = (lon2-lon1).toRadians();
+
+    var a = Math.sin(latitudeDelta/2) * Math.sin(latitudeDelta/2) +
+        Math.cos(latitudeRadians1) * Math.cos(latitudeRadians2) *
+        Math.sin(longitudeDelta/2) * Math.sin(longitudeDelta/2);
+
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return (radiusEarth * c);
+}
+
+function getMilesFromMeters(meters)
+{
+    var metersPerMile = 1609.34; 
+    return (meters / 1609.34);
+}
 
 //#YY  MM DD hh mm WVHT  SwH  SwP  WWH  WWP SwD WWD  STEEPNESS  APD MWD
 //#yr  mo dy hr mn    m    m  sec    m  sec  -  degT     -      sec degT
-function BouyData(SID,YY,MM,DD,hh,mm,WVHT,SwH,SwP,WWH,WWP,SwD,WWD,STEEPNESS,APD,MWD)
+function BuoyData(SID,YY,MM,DD,hh,mm,WVHT,SwH,SwP,WWH,WWP,SwD,WWD,STEEPNESS,APD,MWD)
 {
     //Station or Buoy Identifier
     this.stationid = SID;
@@ -44,27 +187,27 @@ function BouyData(SID,YY,MM,DD,hh,mm,WVHT,SwH,SwP,WWH,WWP,SwD,WWD,STEEPNESS,APD,
     //Mean Wave Direction
     this.MeanWaveDirection=MWD;
 
-    BouyData.prototype.getInfo = function () {
+    BuoyData.prototype.getInfo = function () {
         return JSON.stringify(this);
     }
 }
 
-function DataStatus(status)
+function BuoyDataStatus(status)
 {
     this.status=status;
 
-    DataStatus.prototype.getInfo = function() {
+    BuoyDataStatus.prototype.getInfo = function() {
         return JSON.stringify(this);
     }
 }
 
 
-function clearBouyData()
+function clearBuoyData()
 {
     fortyFiveDayData = [];
 }
 
-function buildBouyDataFromResponse(stationId, data ){
+function buildBuoyDataFromResponse(stationId, data ){
 
     var responseData = data.join('');
     var lines = responseData.split("\n");
@@ -79,7 +222,7 @@ function buildBouyDataFromResponse(stationId, data ){
 
         var splitLine = lines[ii].split(/\s+/);
 
-        var bouyData = new BouyData(stationId,
+        var buoyData = new BuoyData(stationId,
             splitLine[0],
             splitLine[1],
             splitLine[2],
@@ -95,10 +238,10 @@ function buildBouyDataFromResponse(stationId, data ){
             splitLine[12],
             splitLine[13],
             splitLine[14]);
-        fortyFiveDayData.push(bouyData);
+        fortyFiveDayData.push(buoyData);
     }
 
-    status = new DataStatus('true'); 
+    status = new BuoyDataStatus('true'); 
 }
 
 function getDataForStation(stationId)
@@ -113,13 +256,13 @@ function getDataForStation(stationId)
            responseParts.push(chunk.trim());
        });
        res.on("end", function(){
-           clearBouyData();
-           buildBouyDataFromResponse(stationId, responseParts);
+           clearBuoyData();
+           buildBuoyDataFromResponse(stationId, responseParts);
        });
    });
 }
 
-function getBouyDataArray()
+function getBuoyDataArray()
 {
     return fortyFiveDayData;
 }
@@ -131,15 +274,15 @@ function getStationDataForTimeInterval(stationid, timeInterval)
 
 
 module.exports = {
-     initBouyData: function(stationid)
+     initBuoyData: function(stationid)
      {
          getDataForStation(stationid);
      },
-     getBouyData: function()
+     getBuoyData: function()
      {
-         return getBouyDataArray();
+         return getBuoyDataArray();
      },
-     getBouyDataStatus: function()
+     getBuoyDataStatus: function()
      {
          return status;
      },

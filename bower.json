@@ -1,0 +1,23 @@
+{
+  "name": "surf_forecast",
+  "homepage": "https://github.com/knunzio/surf_forecast",
+  "authors": [
+    "Keith.Mastranunzio <keith.mastranunzio@nike.com>"
+  ],
+  "description": "Surf forecasting application.",
+  "main": "surf_forecast_server.js",
+  "moduleType": [
+    "node",
+    "cron",
+    "express"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

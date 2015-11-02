@@ -12,23 +12,23 @@ function setCronStationId(stationId)
 
 var cronJob = cron.job("0 */1 * * * *", function(){
     // perform operation e.g. GET request http.get() etc.
-    console.log("acquiring BouyData for station: " + cronStation);
-    bouyData.initBouyData(cronStation);
+    console.log("acquiring BuoyData for station: " + cronStation);
+    bouyData.initBuoyData(cronStation);
 }); 
 
 app.get('/bouyData', function (req, res) {
-  res.send(bouyData.getBouyData());
+  res.send(bouyData.getBuoyData());
 });
 
 app.get('/bouyDataStatus', function (req, res) {
-  res.send(bouyData.getBouyDataStatus());
+  res.send(bouyData.getBuoyDataStatus());
 });
 
 var server = app.listen(3000, function () 
 {
   var stationId = '46229';
 
-  bouyData.initBouyData(stationId);
+  bouyData.initBuoyData(stationId);
   
   var host = server.address().address;
   var port = server.address().port;
