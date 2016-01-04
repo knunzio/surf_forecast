@@ -3,8 +3,14 @@ var http = require('http');
 var host='http://www.ndbc.noaa.gov';
 var buoyNumber = '46229';
 var fortyFiveDayData = [];
+var stationData = [];
 var status = new BuoyDataStatus('false');
+var rp = require('request-promise');
 
+/**
+ * Points on a compass mapped to 
+ * their degrees.
+ */
 var compassPoints [
         {'N':'0'},
         {'NNE':'23'},
@@ -24,6 +30,9 @@ var compassPoints [
         {'NNW':'326'}
     ];
 
+/**
+ * Forecasted surf breaks.
+ */
 var  surfBreaks [
         {
             name            : 'SeaSide, OR',
@@ -41,7 +50,10 @@ var  surfBreaks [
         }
     ];
 
-var oregonStations = [
+/**
+ * Buoy stations.
+ */
+var nearShoreOregonStations = [
         {
             stationNumber : '46211',
             stationName   : 'Grays Harbor'
@@ -73,7 +85,10 @@ var oregonStations = [
     ];
 
 
-var longTermBuoys = [
+/**
+ * Pacific stations used for long term forecasting.
+ */
+var offShorePacificStations = [
         {
             stationNumber : '46036',
             stationName   : 'South Nomad',
@@ -126,7 +141,7 @@ var longTermBuoys = [
     ];
 
 //Ignore N vs S lat and E vs W long
-function haversin = function(lat1,lon1, lat2, lon2){
+var haversin = function(lat1,lon1, lat2, lon2){
     var radiusEarth = 6371000; // metres
     var latitudeRadians1 = lat1.toRadians();
     var latitudeRadians2 = lat2.toRadians();
@@ -145,7 +160,7 @@ function haversin = function(lat1,lon1, lat2, lon2){
 function getMilesFromMeters(meters)
 {
     var metersPerMile = 1609.34; 
-    return (meters / 1609.34);
+    return (meters / metersPerMile);
 }
 
 //#YY  MM DD hh mm WVHT  SwH  SwP  WWH  WWP SwD WWD  STEEPNESS  APD MWD
@@ -271,6 +286,14 @@ function getStationDataForTimeInterval(stationid, timeInterval)
 {
 
 }
+
+rp('')
+    .then(function(htmlString){
+        // Process html... 
+    })
+    .catch(function (err) {
+        // Crawling failed... 
+    });
 
 
 module.exports = {
